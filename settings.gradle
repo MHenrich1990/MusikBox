@@ -1,0 +1,1 @@
+include ':app', ':spotify-app-remote-release', ':spotify-app-remote', ':spotify-auth', ':spotify-auth-release-1.1.0'
