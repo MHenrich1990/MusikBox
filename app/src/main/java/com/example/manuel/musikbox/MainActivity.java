@@ -108,41 +108,7 @@ public class MainActivity extends AppCompatActivity {
                         // Something went wrong when attempting to connect! Handle errors here
                     }
                 });
-        public void selectPlaylist(int index){
-            filterPlaylist("Salome");
-            //List<List<String>> Bib = filterPlaylist("Salome");
-            List playlist = Bib.get(0);
-            List image = Bib.get(1);
-            //Play a playlist
-            //List playlist = Bib.get(0);
-            //List image = Bib.get(1);
-            if (index == 1) {
-                //mSpotifyAppRemote.getPlayerApi().play(playlist.get(0).toString());
-                //setPlaylistPicture(image.get(0).toString());
-                setPlaylistPicture("http://i.imgur.com/DvpvklR.png");
-                logMessage("Spiele Playlist1");
-            }
-            // Subscribe to PlayerState
-            mSpotifyAppRemote.getPlayerApi()
-                    .subscribeToPlayerState()
-                    .setEventCallback(new Subscription.EventCallback<PlayerState>() {
 
-                        public void onEvent(PlayerState playerState) {
-                            final Track track = playerState.track;
-                            if (track != null) {
-                                String trackName= track.name;
-                                String artistName = track.artist.name;
-                                setTextFeld(trackName);
-
-                            }
-                        }
-                    });
-        }
-        public void Play(View view){
-            Button Play = findViewById(R.id.playButton);
-            //Toast.makeText(MainActivity.this, "StopButton Clicked", Toast.LENGTH_LONG).show();
-            selectPlaylist(1);
-        }
     }
 
     @Override
@@ -226,6 +192,41 @@ public class MainActivity extends AppCompatActivity {
                     })));
             return result;
         }
+    public void selectPlaylist(int index){
+        filterPlaylist("Salome");
+        List<List<String>> Bib = filterPlaylist("Salome");
+        List playlist = Bib.get(0);
+        List image = Bib.get(1);
+        //Play a playlist
+        //List playlist = Bib.get(0);
+        //List image = Bib.get(1);
+        if (index == 1) {
+            //mSpotifyAppRemote.getPlayerApi().play(playlist.get(0).toString());
+            //setPlaylistPicture(image.get(0).toString());
+            setPlaylistPicture("http://i.imgur.com/DvpvklR.png");
+            logMessage("Spiele Playlist1");
+        }
+        // Subscribe to PlayerState
+        mSpotifyAppRemote.getPlayerApi()
+                .subscribeToPlayerState()
+                .setEventCallback(new Subscription.EventCallback<PlayerState>() {
+
+                    public void onEvent(PlayerState playerState) {
+                        final Track track = playerState.track;
+                        if (track != null) {
+                            String trackName= track.name;
+                            String artistName = track.artist.name;
+                            setTextFeld(trackName);
+
+                        }
+                    }
+                });
+    }
+    public void Play(View view){
+        Button Play = findViewById(R.id.playButton);
+        //Toast.makeText(MainActivity.this, "StopButton Clicked", Toast.LENGTH_LONG).show();
+        selectPlaylist(1);
+    }
 //Die Funktion hier funktioniert verstehe sie aber noch nicht
     //public void onGetFitnessRecommendedContentItems(View view) {
      //   mSpotifyAppRemote.getContentApi()
@@ -262,12 +263,6 @@ public class MainActivity extends AppCompatActivity {
         mSpotifyAppRemote.getPlayerApi().skipNext();
     }
 
-
-    public void Play(View view) throws InterruptedException {
-        Button Play = findViewById(R.id.playButton);
-        //Toast.makeText(MainActivity.this, "StopButton Clicked", Toast.LENGTH_LONG).show();
-        selectPlaylist(1);
-    }
     public void Stop(View view){
         Button Stop = findViewById(R.id.pauseButton);
         //Toast.makeText(MainActivity.this, "StopButton Clicked", Toast.LENGTH_LONG).show();
