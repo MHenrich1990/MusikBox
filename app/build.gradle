@@ -16,6 +16,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+    }
 }
 
 repositories {
@@ -35,5 +39,6 @@ dependencies {
     implementation project(':spotify-app-remote')
     implementation "com.google.code.gson:gson:2.8.2"
     implementation 'com.spotify.sdk:spotify-auth-release:1.1.0@aar'
+    implementation 'com.squareup.picasso:picasso:2.71828'
 
 }
