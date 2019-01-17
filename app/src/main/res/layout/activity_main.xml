@@ -42,7 +42,7 @@
         android:layout_marginEnd="50dp"
         android:layout_marginRight="50dp"
         android:onClick="Next"
-        android:text="Vor"
+        android:text="vor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/zuruckButton"
         app:layout_constraintTop_toBottomOf="@+id/playlistImage" />
@@ -57,7 +57,7 @@
         android:layout_marginEnd="50dp"
         android:layout_marginRight="50dp"
         android:onClick="Previous"
-        android:text="Zurück"
+        android:text="zurück"
         app:layout_constraintEnd_toStartOf="@+id/vorButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/playlistImage" />
@@ -72,7 +72,7 @@
         android:layout_marginEnd="50dp"
         android:layout_marginRight="50dp"
         android:onClick="Stop"
-        android:text="Pause"
+        android:text="pause"
         app:layout_constraintEnd_toStartOf="@+id/playButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/zuruckButton" />
@@ -87,9 +87,43 @@
         android:layout_marginEnd="50dp"
         android:layout_marginRight="50dp"
         android:onClick="Play"
-        android:text="Play"
+        android:text="play"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/pauseButton"
         app:layout_constraintTop_toBottomOf="@+id/vorButton" />
+
+    <Button
+        android:id="@+id/playlistUp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="108dp"
+        android:layout_marginEnd="2dp"
+        android:layout_marginRight="2dp"
+        android:layout_marginBottom="130dp"
+        android:onClick="playListUp"
+        android:text="+"
+        app:layout_constraintBottom_toTopOf="@+id/vorButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/playlistImage"
+        app:layout_constraintTop_toBottomOf="@+id/SongTitle" />
+
+    <Button
+        android:id="@+id/playlistDown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="3dp"
+        android:layout_marginLeft="3dp"
+        android:layout_marginTop="108dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="130dp"
+        android:onClick="playListDown"
+        android:text="-"
+        app:layout_constraintBottom_toTopOf="@+id/zuruckButton"
+        app:layout_constraintEnd_toStartOf="@+id/playlistImage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/SongTitle" />
 
 </android.support.constraint.ConstraintLayout>
