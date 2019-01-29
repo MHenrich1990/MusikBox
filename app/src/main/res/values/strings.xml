@@ -16,4 +16,10 @@
         completions."
     </string>
     <string name="Play_Stop">Play/Stop</string>
+    <string name="pause">pause</string>
+    <string name="zurück">zurück</string>
+    <string name="vor">vor</string>
+    <string name="textView">Text View</string>
+    <string name="todo">TODO</string>
+    <string name="play">play</string>
 </resources>

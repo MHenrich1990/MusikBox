@@ -1,129 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/relativeLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/background_dark"
-    tools:context=".MainActivity">
-
-    <TextView
-        android:id="@+id/SongTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="25dp"
-        android:layout_marginBottom="25dp"
-        android:gravity="center_vertical|center_horizontal"
-        android:text="TextView"
-        android:textColor="@android:color/background_light"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@+id/playlistImage"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/playlistImage"
-        android:layout_width="210dp"
-        android:layout_height="211dp"
-        android:layout_marginTop="25dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/SongTitle"
-        tools:srcCompat="@tools:sample/avatars" />
-
-    <Button
-        android:id="@+id/vorButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginLeft="50dp"
-        android:layout_marginTop="50dp"
-        android:layout_marginEnd="50dp"
-        android:layout_marginRight="50dp"
-        android:onClick="Next"
-        android:text="vor"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/zuruckButton"
-        app:layout_constraintTop_toBottomOf="@+id/playlistImage" />
+    android:background="@color/colorPrimaryDark"
+    tools:context="com.example.manuel.musikbox.MainActivity">
 
     <Button
         android:id="@+id/zuruckButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginLeft="50dp"
-        android:layout_marginTop="50dp"
-        android:layout_marginEnd="50dp"
-        android:layout_marginRight="50dp"
         android:onClick="Previous"
-        android:text="zurück"
-        app:layout_constraintEnd_toStartOf="@+id/vorButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/playlistImage" />
+        android:tag="null"
+        android:text="@string/zurück"
+        app:layout_anchor="@+id/view_flipper"
+        app:layout_anchorGravity="left|bottom" />
+
+    <TextView
+        android:id="@+id/SongTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical|center_horizontal"
+        android:text="@string/textView"
+        android:textColor="@android:color/background_light"
+        android:textSize="24sp"
+        android:visibility="visible"
+        app:layout_anchor="@+id/view_flipper"
+        app:layout_anchorGravity="right|center" />
+
+    <ViewFlipper
+        android:id="@+id/view_flipper"
+        android:layout_width="392dp"
+        android:layout_height="362dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="17dp"
+        android:background="@android:color/background_dark"
+        android:foregroundGravity="center_vertical|center|center_horizontal"
+        android:inAnimation="@android:anim/slide_in_left"
+        android:outAnimation="@android:anim/slide_out_right">
+
+        <ImageView
+            android:id="@+id/playlistImage"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center|clip_vertical|center_horizontal"
+            android:contentDescription="@string/todo"
+            android:scaleType="center"
+            app:layout_constraintTop_toBottomOf="@+id/SongTitle"
+            tools:srcCompat="@tools:sample/avatars" />
+    </ViewFlipper>
 
     <Button
         android:id="@+id/pauseButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginLeft="50dp"
-        android:layout_marginTop="25dp"
-        android:layout_marginEnd="50dp"
-        android:layout_marginRight="50dp"
         android:onClick="Stop"
-        android:text="pause"
-        app:layout_constraintEnd_toStartOf="@+id/playButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/zuruckButton" />
+        android:text="@string/pause"
+        app:layout_anchor="@+id/view_flipper"
+        app:layout_anchorGravity="bottom|center" />
 
     <Button
         android:id="@+id/playButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginLeft="50dp"
-        android:layout_marginTop="25dp"
-        android:layout_marginEnd="50dp"
-        android:layout_marginRight="50dp"
         android:onClick="Play"
-        android:text="play"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/pauseButton"
-        app:layout_constraintTop_toBottomOf="@+id/vorButton" />
+        android:text="@string/play"
+        app:layout_anchor="@+id/pauseButton"
+        app:layout_anchorGravity="bottom|center" />
 
     <Button
         android:id="@+id/playlistUp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="108dp"
-        android:layout_marginEnd="2dp"
-        android:layout_marginRight="2dp"
-        android:layout_marginBottom="130dp"
-        android:onClick="playListUp"
+        android:onClick="nextView"
         android:text="+"
-        app:layout_constraintBottom_toTopOf="@+id/vorButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/playlistImage"
-        app:layout_constraintTop_toBottomOf="@+id/SongTitle" />
+        app:layout_anchor="@+id/view_flipper"
+        app:layout_anchorGravity="right|center" />
 
     <Button
         android:id="@+id/playlistDown"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="3dp"
-        android:layout_marginLeft="3dp"
-        android:layout_marginTop="108dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_marginBottom="130dp"
-        android:onClick="playListDown"
+        android:onClick="previousView"
         android:text="-"
-        app:layout_constraintBottom_toTopOf="@+id/zuruckButton"
-        app:layout_constraintEnd_toStartOf="@+id/playlistImage"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/SongTitle" />
+        app:layout_anchor="@+id/view_flipper"
+        app:layout_anchorGravity="left|center" />
 
-</android.support.constraint.ConstraintLayout>
+    <Button
+        android:id="@+id/vorButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="50dp"
+        android:layout_marginTop="50dp"
+        android:layout_marginBottom="50dp"
+        android:onClick="Next"
+        android:text="@string/vor"
+        app:layout_anchor="@+id/view_flipper"
+        app:layout_anchorGravity="right|bottom" />
+
+    <SeekBar
+        android:id="@+id/seekBar"
+        android:layout_width="252dp"
+        android:layout_height="20dp"
+        app:layout_anchor="@+id/view_flipper"
+        app:layout_anchorGravity="top|center" />
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_anchor="@+id/view_flipper"
+        app:layout_anchorGravity="bottom|center">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </TableLayout>
+
+</android.support.design.widget.CoordinatorLayout>

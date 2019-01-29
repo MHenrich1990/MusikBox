@@ -1,19 +1,16 @@
 package com.example.manuel.musikbox;
 
+import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.media.Image;
-import android.media.session.PlaybackState;
-import android.provider.DocumentsContract;
-import android.service.carrier.CarrierMessagingService;
+import android.media.AudioManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.telecom.Call;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,44 +18,33 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 
-import com.google.gson.internal.bind.ArrayTypeAdapter;
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
 import com.spotify.android.appremote.api.ContentApi;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
 import com.spotify.protocol.client.CallResult;
 import com.spotify.protocol.client.ErrorCallback;
-import com.spotify.protocol.client.Result;
-import com.spotify.protocol.client.RequiredFeatures;
 import com.spotify.protocol.client.Subscription;
-import com.spotify.protocol.mappers.jackson.ImageUriJson;
 import com.spotify.protocol.types.ImageUri;
-import com.spotify.protocol.types.Item;
-import com.spotify.protocol.types.LibraryState;
 import com.spotify.protocol.types.ListItem;
 import com.spotify.protocol.types.ListItems;
 import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
-import com.spotify.protocol.types.Types;
-import com.spotify.protocol.types.Uri;
-import com.spotify.protocol.types.UserStatus;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
-import com.squareup.picasso.Picasso;
 
-import org.w3c.dom.Document;
-
-import java.lang.reflect.Array;
-import java.lang.reflect.Type;
-import java.net.URI;
+import java.lang.reflect.Field;
+import java.sql.Time;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeUnit;
+
+import android.widget.ViewFlipper;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -71,11 +57,16 @@ public class MainActivity extends AppCompatActivity {
     public static final String playlist = "spotify:user:m.henrich_v:playlist:4NHfHAWyT9UzsKyd933Gb0" ;
     AuthenticationRequest.Builder builder =
             new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
-    public double playListNumber = 0.;
-
-
-
-
+    public int playListNumber;
+    public int counter = 0;
+    public double playListDouble = 0.;
+    private ViewFlipper viewFlipper;
+    public List <ListItems> allPlaylists = new ArrayList<>();
+    public String actualPlalistUri;
+    private String plFilter = "Salome";
+    private SeekBar volumSeekBar;
+    private AudioManager audioManager;
+    final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,37 +74,44 @@ public class MainActivity extends AppCompatActivity {
         AuthenticationRequest request = builder.build();
         AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
         setContentView(R.layout.activity_main);
+        viewFlipper = findViewById(R.id.view_flipper);
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        initControls();
+        ConnectionParams connectionParams =
+                new ConnectionParams.Builder(CLIENT_ID)
+                        .setRedirectUri(REDIRECT_URI)
+                        .setPreferredImageSize(500)
+                        .setPreferredThumbnailImageSize(100)
+                        .showAuthView(true)
+                        .build();
+        SpotifyAppRemote.connect(this, connectionParams,
+                new Connector.ConnectionListener() {
 
-            }
+                    public void onConnected(SpotifyAppRemote spotifyAppRemote) {
+                        mSpotifyAppRemote = spotifyAppRemote;
+                        if (mSpotifyAppRemote.isConnected()){
+                            Toast.makeText(MainActivity.this, "Mit Spotify verbunden!", Toast.LENGTH_LONG).show();
+                            fetchPlaylist1();
+                        }
+                    }
+                    public void onFailure(Throwable throwable) {
+                        Log.e("MyActivity", throwable.getMessage(), throwable);
+                        Toast.makeText(MainActivity.this, "Verbindung fehlgeschlagen!", Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
 
     @Override
     protected void onStart() {
         super.onStart();
         String StartNachricht = "Hallo Salome";
         setTextFeld(StartNachricht);
-        ConnectionParams connectionParams =
-                new ConnectionParams.Builder(CLIENT_ID)
-                        .setRedirectUri(REDIRECT_URI)
-                        .setPreferredImageSize(800)
-                        .setPreferredThumbnailImageSize(100)
-                        .showAuthView(true)
-                        .build();
-
-        SpotifyAppRemote.connect(this, connectionParams,
-                new Connector.ConnectionListener() {
-
-                    public void onConnected(SpotifyAppRemote spotifyAppRemote) {
-                        mSpotifyAppRemote = spotifyAppRemote;
-                        Toast.makeText(MainActivity.this, "Mit Spotify verbunden!", Toast.LENGTH_LONG).show();
-                    }
-
-                    public void onFailure(Throwable throwable) {
-                        Log.e("MyActivity", throwable.getMessage(), throwable);
-                        Toast.makeText(MainActivity.this, "Verbindung fehlgeschlagen!", Toast.LENGTH_LONG).show();
-                    }
-                });
+        //Button down = findViewById(R.id.playlistDown);
+        //previousView(down);
 
     }
+
 
     @Override
     protected void onStop() {
@@ -126,92 +124,142 @@ public class MainActivity extends AppCompatActivity {
         mSpotifyAppRemote.getPlayerApi().pause();
         SpotifyAppRemote.disconnect(mSpotifyAppRemote);
     }
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    public void showCurrentPlayerContext(View view) {
-        if (view.getTag() != null) {
-            showDialog("PlayerContext", gson.toJson(view.getTag()));
+
+    private void initControls(){
+        try {
+            volumSeekBar = (SeekBar) findViewById(R.id.seekBar);
+            audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            volumSeekBar.setMax(audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
+            volumSeekBar.setProgress(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
+            volumSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,progress,0);
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+
+                }
+            });
         }
+        catch (Exception e){}
+    }
+    public void fetchPlaylist1() {
+        ContentApi contentApi = mSpotifyAppRemote.getContentApi();
+        contentApi.getRecommendedContentItems(ContentApi.ContentType.DEFAULT)
+                .setResultCallback(listItems -> contentApi.getChildrenOfItem(listItems.items[1],100,0)
+                        .setResultCallback(Bib -> contentApi.getChildrenOfItem(Bib.items[0],100,0)
+                                .setResultCallback(allPlayLists -> {
+                                    getListItem(allPlayLists);
+                                    getListItem(Bib);
+                                })));
+
+    }
+
+    public List<ListItems> getListItem(ListItems listItems){
+        allPlaylists.add(listItems);
+        return allPlaylists;
+    }
+
+    public List getPlayListData(String filter) {
+        allPlaylists = getListItem(null);
+        List<String> playlistName = new ArrayList<>();
+        List<String> playlistUris = new ArrayList<>();
+        List<ImageUri> playlistImage = new ArrayList<>();
+        for (int i = 0; i < allPlaylists.get(0).items.length; ++i) {
+            if (allPlaylists.get(0).items[i].title.contains(filter)) {
+                playlistName.add(allPlaylists.get(0).items[i].title);
+                playlistUris.add(allPlaylists.get(0).items[i].uri);
+                playlistImage.add(allPlaylists.get(0).items[i].imageUri);
+            }
+        }
+        List playListData = new ArrayList(){};
+        playListData.add(playlistName);
+        playListData.add(playlistUris);
+        playListData.add(playlistImage);
+        return playListData;
     }
 
 
-//Funktion Filtert Account nach Playlists mit dem Filterwort und Schreibt die URIS in Liste Playlists
-     public void playSelectedPlaylist (String filter, double j) {
-         mSpotifyAppRemote.getContentApi().getRecommendedContentItems(ContentApi.ContentType.DEFAULT)
-         .setResultCallback(listItems -> mSpotifyAppRemote.getContentApi()
-             .getChildrenOfItem(listItems.items[1],100, 0)
-             .setResultCallback(childListItems -> mSpotifyAppRemote.getContentApi()
-                 .getChildrenOfItem(childListItems.items[0],100, 0)
-                 .setResultCallback(grandChildListItems -> {
-                     List<String> playlistURIS = new ArrayList<>();
-                     List<String> playlistname = new ArrayList<>();
-                     ListItem[] item;
+    public int setPlaylistNumber (int counter, int listLength){
+        Button up = findViewById(R.id.playlistUp);
+        Button down = findViewById(R.id.playlistDown);
+        if(counter >= listLength-1){
+            up.setVisibility(View.INVISIBLE);
+            down.setVisibility(View.VISIBLE);
+            playListNumber = listLength-1;
+            logMessage(Integer.toString(playListNumber));
+        }
+        else if(counter == 0){
+            playListNumber = 0;
+            up.setVisibility(View.VISIBLE);
+            down.setVisibility(View.INVISIBLE);
+            logMessage(Integer.toString(playListNumber));
+        }
+        else{
+            up.setVisibility(View.VISIBLE);
+            down.setVisibility(View.VISIBLE);
+            playListNumber = counter;
+            logMessage(Integer.toString(playListNumber));
+        }
+        return playListNumber;
+    }
 
-                     for (int i = 0; i< grandChildListItems.items.length; ++i) {
-                         item = grandChildListItems.items;
-                         if (item[i].title.contains(filter)) {
-                             playlistname.add(item[i].title);
-                             playlistURIS.add(item[i].uri);
-                         }
-                     }
-                     int length = playlistURIS.size();
-                     int m = (int) j;
-                     double doubelLength = (double) length;
-                     double minusratio = j/doubelLength-1;
-                     int ratioInt = (int)minusratio;
-                     int plusratio = m/length;
-                     int n;
-                     int negOne = -1;
-                     int zero = 0;
-                     if(m >= length){
-                         n = m - (plusratio*length);
-                         //logMessage(Integer.toString(ratioInt));
-                         mSpotifyAppRemote.getPlayerApi().play(playlistURIS.get(n));
-                         //List Data = Arrays.asList(m, doubelLength,plusratio,ratioInt,n);
-                         //showDialog("Playlsists", gson.toJson(Data));
-                         setTextFeld(playlistname.get(n));
-                     }
-                     if(j <= negOne){
-                         n = m - (ratioInt*length) - 1;
-                         //logMessage(Integer.toString(n));
-                         //List Data = Arrays.asList(m, doubelLength,ratio,ratioInt,n);
-                         //showDialog("Playlsists", gson.toJson(Data));
-                         mSpotifyAppRemote.getPlayerApi().play(playlistURIS.get(n));
-                         setTextFeld(playlistname.get(n));
-                     }
-                     else{
-                         mSpotifyAppRemote.getPlayerApi().play(playlistURIS.get(m));
-                         logMessage("bin in else");
-                         setTextFeld(playlistname.get(m));
-                     }
-                 })
-             )
-         );
-     }
+    public void previousView(View v) {
+        counter = --counter;
+        viewFlipper.setInAnimation(this, R.anim.slide_in_right);
+        viewFlipper.setOutAnimation(this, R.anim.slide_out_left);
+        List pLInfo = getPlayListData(plFilter);
+        List pLName = (List<String>)pLInfo.get(0);
+        List pLUri = (List<String>)pLInfo.get(1);
+        List pLImage = (List<ImageUri>)pLInfo.get(2);
+        int playListNumber = setPlaylistNumber(counter,pLName.size());
+        if (playListNumber >= pLName.size()-1)
+            counter = pLName.size()-1;
+        else if (playListNumber <= 0)
+            counter = 0;
+        setPlaylistPic((ImageUri) pLImage.get(counter));
+        setTextFeld((String) pLName.get(counter));
+        actualPlalistUri = pLUri.get(counter).toString();
+        //showDialog("next",gson.toJson(pLName));
+        //setPlaylistPic(playlist.imageUri);
+        setTextFeld((String) pLName.get(counter));
+        //play.setTag(1, pLUri.get(counter));
+        viewFlipper.showNext();
+    }
 
-     public void playListUp(View view){
-         Button up = findViewById(R.id.playlistUp);
-         playListNumber = playListNumber+1.;
-         playSelectedPlaylist("Salome", playListNumber);
-         //setPlaylistTitle();
-         setPlaylistPicture();
-         logMessage(Double.toString(playListNumber));
-     }
-     public void playListDown(View view){
-         Button down = findViewById(R.id.playlistDown);
-         playListNumber = playListNumber-1.;
-         playSelectedPlaylist("Salome", playListNumber);
-         //setPlaylistTitle();
-         setPlaylistPicture();
-         logMessage(Double.toString(playListNumber));
-     }
+    public void nextView(View v) {
+        counter = ++counter;
+        viewFlipper.setInAnimation(this, android.R.anim.slide_in_left);
+        viewFlipper.setOutAnimation(this, android.R.anim.slide_out_right);
+        List pLInfo = getPlayListData(plFilter);
+        List pLName = (List<String>)pLInfo.get(0);
+        List pLUri = (List<String>)pLInfo.get(1);
+        List pLImage = (List<ImageUri>)pLInfo.get(2);
+        int playListNumber = setPlaylistNumber(counter,pLName.size());
+        if (playListNumber >= pLName.size()-1)
+            counter = pLName.size()-1;
+        else if (playListNumber <= 0)
+            counter = 0;
+        setPlaylistPic((ImageUri) pLImage.get(counter));
+        setTextFeld((String) pLName.get(counter));
+        actualPlalistUri = pLUri.get(counter).toString();
+        //showDialog("next",gson.toJson(pLName));
+        //setPlaylistPic(playlist.imageUri);
+        setTextFeld((String) pLName.get(counter));
+        viewFlipper.showNext();
+
+    }
 
      public void Play(View view){
          Button Play = findViewById(R.id.playButton);
-         if (mSpotifyAppRemote.isConnected()){
-             mSpotifyAppRemote.getPlayerApi().resume();
-             //setPlaylistTitle();
-             setPlaylistPicture();
-         }
+         if (actualPlalistUri !=null) mSpotifyAppRemote.getPlayerApi().play(actualPlalistUri);
      }
 
      private void Unpause() {
@@ -244,12 +292,11 @@ public class MainActivity extends AppCompatActivity {
          Next();
 
      }
-
      public void setTextFeld(String title) {
          TextView Title = findViewById(R.id.SongTitle);
          Title.setText(title);
+         //showDialog("Dialog", Uri);
      }
-
      public void setPlaylistTitle (){
          TextView Title = findViewById(R.id.SongTitle);
          mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState()
@@ -258,6 +305,13 @@ public class MainActivity extends AppCompatActivity {
                      if (track != null) Title.setText(track.name);
                  });
      }
+
+     public void setPlaylistPic(ImageUri imageUri){
+        ImageView playlistPic = findViewById(R.id.playlistImage);
+        mSpotifyAppRemote.getImagesApi().getImage(imageUri)
+                .setResultCallback(bitmap -> playlistPic.setImageBitmap(bitmap));
+     }
+
      public void setPlaylistPicture() {
 
          ImageView playlistPic = findViewById(R.id.playlistImage);
