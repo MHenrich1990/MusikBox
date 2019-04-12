@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:onClick="Previous"
         android:tag="null"
-        android:text="@string/zurück"
+        android:background="@drawable/backward_solid_wt"
         app:layout_anchor="@+id/view_flipper"
         app:layout_anchorGravity="left|bottom" />
 
@@ -56,21 +56,12 @@
     </ViewFlipper>
 
     <Button
-        android:id="@+id/pauseButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="Stop"
-        android:text="@string/pause"
-        app:layout_anchor="@+id/view_flipper"
-        app:layout_anchorGravity="bottom|center" />
-
-    <Button
         android:id="@+id/playButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="Play"
-        android:text="@string/play"
-        app:layout_anchor="@+id/pauseButton"
+        android:background="@drawable/custom_play_button"
+        app:layout_anchor="@+id/view_flipper"
         app:layout_anchorGravity="bottom|center" />
 
     <Button
@@ -98,19 +89,20 @@
         android:layout_marginLeft="50dp"
         android:layout_marginTop="50dp"
         android:layout_marginBottom="50dp"
+        android:background="@drawable/forward_solid_wt"
         android:onClick="Next"
-        android:text="@string/vor"
         app:layout_anchor="@+id/view_flipper"
         app:layout_anchorGravity="right|bottom" />
 
     <SeekBar
         android:id="@+id/seekBar"
-        android:layout_width="252dp"
-        android:layout_height="20dp"
-        app:layout_anchor="@+id/view_flipper"
-        app:layout_anchorGravity="top|center" />
+        android:layout_width="257dp"
+        android:layout_height="60dp"
+        app:layout_anchor="@+id/tableLayout"
+        app:layout_anchorGravity="bottom|center" />
 
     <TableLayout
+        android:id="@+id/tableLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_anchor="@+id/view_flipper"
