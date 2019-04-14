@@ -1,9 +1,12 @@
 package com.example.manuel.musikbox;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
+import android.media.FaceDetector;
+import android.net.Uri;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -61,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
     public int playListNumber;
     public int counter = 0;
     private ViewFlipper viewFlipper;
-    public List <ListItems> allPlaylists = new ArrayList<>();
+    public List <ListItems> allPlaylists = new ArrayList<ListItems>();
     public String actualPlalistUri;
     private SeekBar volumeSeekBar;
     private AudioManager audioManager;
@@ -76,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
     public Integer ThumbnailSize = 75;
     public String StartNachricht = "Salomes MusikBox";
     public String plFilter = "Salome";
+    public List<Object> playListData = new ArrayList<Object>(){};
+    public Integer ErrorFlag;
     
 
     AuthenticationRequest.Builder builder =
@@ -89,22 +94,30 @@ public class MainActivity extends AppCompatActivity {
             mSpotifyAppRemote = spotifyAppRemote;
             if (mSpotifyAppRemote.isConnected()){
                 fetchPlaylist();
-                //Toast.makeText(MainActivity.this, "Playlist gefecht!", Toast.LENGTH_SHORT).show();
-                Toast.makeText(MainActivity.this, "Buttons Enabled!", Toast.LENGTH_SHORT).show();
             }
             else{
-                //Toast.makeText(MainActivity.this, "Fetch Faild!", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this, "Fetch Failed!", Toast.LENGTH_SHORT).show();
             }
         }
 
         @Override
         public void onFailure(Throwable error) {
+            error.printStackTrace();
+            //showDialog(error.getMessage(), gson.toJson(error.getMessage()));
             Button closeButton = findViewById(R.id.closeButton);
             Button playButton = findViewById(R.id.playButton);
+            Button nextPlayList = findViewById(R.id.playlistUp);
+            Button previousPlayList = findViewById(R.id.playlistDown);
+            Button next = findViewById(R.id.vorButton);
+            Button prev = findViewById(R.id.zuruckButton);
             playButton.setVisibility(View.INVISIBLE);
             if (closeButton != null) {
                 closeButton.setVisibility(VISIBLE);
             }
+            nextPlayList.setEnabled(FALSE);
+            previousPlayList.setEnabled(FALSE);
+            next.setEnabled(FALSE);
+            prev.setEnabled(FALSE);
         }
     };
     ConnectionParams mConnectionParams =
@@ -120,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // Display dauerhaft an
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE); // Display fest im Landscape mode
-        builder.setScopes(new String[]{"streaming","playlist-read-private","user-library-read"}); //Rechtezusweisung
+        builder.setScopes(new String[]{"streaming", "playlist-read-private", "user-library-read"}); //Rechtezusweisung
         AuthenticationRequest request = builder.build();
         AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
         setContentView(R.layout.activity_main);
@@ -128,10 +141,25 @@ public class MainActivity extends AppCompatActivity {
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         initControls();
+        // ATTENTION: This was auto-generated to handle app links.
+        Intent appLinkIntent = getIntent();
+        String appLinkAction = appLinkIntent.getAction();
+        Uri appLinkData = appLinkIntent.getData();
+
     }
     @Override
     protected void onStart() {
         super.onStart();
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        Button playButton = findViewById(R.id.playButton);
+        //Button nextPlayList = findViewById(R.id.playlistUp);
+        //Button previousPlayList = findViewById(R.id.playlistDown);
+        //Button next = findViewById(R.id.vorButton);
+        //Button prev = findViewById(R.id.zuruckButton);
+        //nextPlayList.setEnabled(FALSE);
+        //previousPlayList.setEnabled(FALSE);
+        //next.setEnabled(FALSE);
+        //prev.setEnabled(FALSE);
         //Toast.makeText(MainActivity.this, "On Start ist gesartet!", Toast.LENGTH_SHORT).show();
         SpotifyAppRemote.disconnect(mSpotifyAppRemote);
         SpotifyAppRemote.connect(this, mConnectionParams, mConnectionListener);
@@ -139,10 +167,10 @@ public class MainActivity extends AppCompatActivity {
         clicksOnPlayFirstStartup = 0;
         nextprevcounter = 0;
         playListID = 0;
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        playButton = findViewById(R.id.playButton);
         playButton.setActivated(false);
         setTextFeld(StartNachricht);
+        EnableButtons();
+       // pLInfo(plFilter);
     }
     @Override
     protected void onStop() {
@@ -156,6 +184,8 @@ public class MainActivity extends AppCompatActivity {
         if (mSpotifyAppRemote != null) {
             mSpotifyAppRemote.getPlayerApi().pause();
             mSpotifyAppRemote.disconnect(mSpotifyAppRemote);
+            finish();
+            System.exit(0);
         }
     }
 
@@ -191,42 +221,95 @@ public class MainActivity extends AppCompatActivity {
                 .setResultCallback(listItems -> contentApi.getChildrenOfItem(listItems.items[1],100,0)
                         .setResultCallback(Bib -> contentApi.getChildrenOfItem(Bib.items[0],100,0)
                                 .setResultCallback(allPlayLists -> {
-                                    getListItem(allPlayLists);
+                                    allPlaylists = getListItem(allPlayLists);
                                     getListItem(Bib);
+                                    //showDialog("fetchPlayList",gson.toJson(Bib));
                                 })));
+    }
 
+    public void EnableButtons(){
+        Button nextPlayList = findViewById(R.id.playlistUp);
+        Button previousPlayList = findViewById(R.id.playlistDown);
+        Button next = findViewById(R.id.vorButton);
+        Button prev = findViewById(R.id.zuruckButton);
+        nextPlayList.setEnabled(TRUE);
+        previousPlayList.setEnabled(TRUE);
+        next.setEnabled(TRUE);
+        prev.setEnabled(TRUE);
+        logMessage("Buttons Enabled!!");
     }
 
     public List<ListItems> getListItem(ListItems listItems){
-        allPlaylists.add(listItems);
+        try{
+            allPlaylists.add(listItems);
+        }
+        catch (Exception e){
+            allPlaylists = null;
+        }
         return allPlaylists;
     }
 
     public List getPlayListData(String filter) {
-        allPlaylists = getListItem(null);
-        List<String> playlistName = new ArrayList<>();
-        List<String> playlistUris = new ArrayList<>();
-        List<ImageUri> playlistImage = new ArrayList<>();
-        List playListData = new ArrayList(){};
-        if (allPlaylists.size() > 0)
-        {
-            for (int i = 0; i < allPlaylists.get(0).items.length; ++i) {
-                if (allPlaylists.get(0).items[i].title.contains(filter)) {
-                    playlistName.add(allPlaylists.get(0).items[i].title);
-                    playlistUris.add(allPlaylists.get(0).items[i].uri);
-                    playlistImage.add(allPlaylists.get(0).items[i].imageUri);
-                }
-            }
+        List<ListItems> items;
+        try {
+            //allPlaylists = getListItem(null);
+            items = allPlaylists;
+            //showDialog("getPlayListData try 1", gson.toJson(items));
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            //showDialog("Error getPlayListData", e.getMessage());
+            items = null;
+        }
 
-            playListData.add(playlistName);
-            playListData.add(playlistUris);
-            playListData.add(playlistImage);
+        try{
+            //showDialog("getPlayListData try 2",gson.toJson(items));
+            int length = items.get(0).items.length;
+            ListItem item[] = items.get(0).items;
+            List<String> playlistName = new ArrayList<String>();
+            List<String> playlistUris = new ArrayList<String>();
+            List<ImageUri> playlistImage = new ArrayList<ImageUri>();
+            //List<Object> playListData = new ArrayList<Object>(){};
+            if (!item[0].hasChildren )
+            {
+                for (int i = 0; i < length ; ++i) {
+                    if (item[i].title.contains(filter)) {
+                        playlistName.add(item[i].title);
+                        playlistUris.add(item[i].uri);
+                        playlistImage.add(item[i].imageUri);
+                    }
+                }
+                playListData.add(playlistName);
+                playListData.add(playlistUris);
+                playListData.add(playlistImage);
+                //showDialog("Fetch Done",gson.toJson(item));
+            }
         }
-        else{
-            logMessage(String.valueOf(playListData.size()));
+        catch (Exception e){
+            //showDialog("getPlayListData catch", gson.toJson(items));
+            playListData.add(0,"Error");
         }
+
+        //else{
+        //    //logMessage(String.valueOf(playListData.size()));
+        //    //SpotifyAppRemote.disconnect(mSpotifyAppRemote);
+        //    //SpotifyAppRemote.connect(this, mConnectionParams, mConnectionListener);
+        //    playListData = null;
+        //    showDialog("Fetch Failed",gson.toJson(playListData));
+        //}
         return playListData;
 
+    }
+
+    public List<Object> pLInfo(String plFilter){
+        try {
+            playListData.add(getPlayListData(plFilter));
+            logMessage("pLInfo Worked");
+        } catch (Exception e) {
+            e.printStackTrace();
+            //showDialog("Error pLInfo", e.getMessage());
+        }
+        return playListData;
     }
 
     public int setPlaylistNumber (int counter, int listLength){
@@ -268,15 +351,26 @@ public class MainActivity extends AppCompatActivity {
      }
 
     public void previousView(View v) {
-        if (getPlayListData(plFilter).size() > 0) {
+        //List<Object> playListData = new ArrayList<Object>(){};
+        try {
+            playListData = getPlayListData(plFilter);
+            //playListData = pLInfo(plFilter);
+            //showDialog("next View Try", gson.toJson(playListData));
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            //showDialog("Error nextView",e.getMessage());
+        }
+        if (playListData.get(0) != "Error") {
+            playButton = findViewById(R.id.playButton);
             nextprevcounter = 0;
             counter = --counter;
             viewFlipper.setInAnimation(this, R.anim.slide_in_right);
             viewFlipper.setOutAnimation(this, R.anim.slide_out_left);
-            List pLInfo = getPlayListData(plFilter);
-            List pLName = (List<String>) pLInfo.get(0);
-            List pLUri = (List<String>) pLInfo.get(1);
-            List pLImage = (List<ImageUri>) pLInfo.get(2);
+            List<Object> pLInfo = getPlayListData(plFilter);
+            List<String> pLName = (List<String>) pLInfo.get(0);
+            List<String> pLUri = (List<String>) pLInfo.get(1);
+            List<ImageUri> pLImage = (List<ImageUri>) pLInfo.get(2);
             int playListNumber = setPlaylistNumber(counter, pLName.size());
             if (playListNumber >= pLName.size() - 1)
                 counter = pLName.size() - 1;
@@ -304,21 +398,35 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         else {
-            logMessage(String.valueOf(getPlayListData(plFilter).size()));
+            playListData.clear();
+            SpotifyAppRemote.disconnect(mSpotifyAppRemote);
+            SpotifyAppRemote.connect(this, mConnectionParams, mConnectionListener);
         }
     }
 
     public void nextView(View v) {
-        if (getPlayListData(plFilter).size() > 0) {
+        try {
+            playListData = getPlayListData(plFilter);
+            //playListData = pLInfo(plFilter);
+            //showDialog("next View Try", gson.toJson(playListData));
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            //showDialog("Error nextView",e.getMessage());
+        }
+        //playListData = pLInfo(plFilter);
+        //PlayListData = getPlayListData(plFilter);
+        if (playListData.get(0) != "Error") {
+            playButton = findViewById(R.id.playButton);
             nextprevcounter = 0;
             //playListChange = ++playListChange;
             counter = ++counter;
             viewFlipper.setInAnimation(this, android.R.anim.slide_in_left);
             viewFlipper.setOutAnimation(this, android.R.anim.slide_out_right);
-            List pLInfo = getPlayListData(plFilter);
-            List pLName = (List<String>) pLInfo.get(0);
-            List pLUri = (List<String>) pLInfo.get(1);
-            List pLImage = (List<ImageUri>) pLInfo.get(2);
+            List<Object> pLInfo = getPlayListData(plFilter);
+            List<String> pLName = (List<String>) pLInfo.get(0);
+            List<String> pLUri = (List<String>) pLInfo.get(1);
+            List<ImageUri> pLImage = (List<ImageUri>) pLInfo.get(2);
             int playListNumber = setPlaylistNumber(counter, pLName.size());
             if (playListNumber >= pLName.size() - 1)
                 counter = pLName.size() - 1;
@@ -340,7 +448,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         else {
-            logMessage(String.valueOf(getPlayListData(plFilter).size()));
+            playListData.clear();
+            SpotifyAppRemote.disconnect(mSpotifyAppRemote);
+            SpotifyAppRemote.connect(this, mConnectionParams, mConnectionListener);
+            //logMessage("try again");
         }
     }
 
@@ -448,18 +559,5 @@ public class MainActivity extends AppCompatActivity {
         finish();
         System.exit(0);
     }
-
-    //public void testConnection(connected){
-    //    Button closeButton = findViewById(R.id.closeButton);
-    //    showDialog("Debug", connected.toString());
-    //    if (connected == "FALSE"){
-    //        closeButton.setVisibility(View.VISIBLE);
-    //    }
-    //}
-
-    //public void closeButton(View v){
-    //    finish();
-    //    System.exit(0);
-    // }
 
 }
